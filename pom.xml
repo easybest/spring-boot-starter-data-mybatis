@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-boot-starter-data-mybatis</artifactId>
-    <version>1.0.1-BUILD-SNAPSHOT</version>
+    <version>1.0.2.RELEASE</version>
     <name>Spring Boot Data MyBatis Starter</name>
     <description>Starter for using Spring Data MyBatis</description>
     <url>https://github.com/hatunet/spring-boot-starter-data-mybatis</url>
@@ -35,7 +35,7 @@
         </developerConnection>
     </scm>
     <properties>
-        <spring.data.mybatis.version>1.0.1.RELEASE</spring.data.mybatis.version>
+        <spring.data.mybatis.version>1.0.2.RELEASE</spring.data.mybatis.version>
     </properties>
     <dependencies>
         <dependency>
@@ -48,12 +48,8 @@
             <version>${spring.data.mybatis.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
     </dependencies>
     <build>
@@ -78,4 +74,59 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>
