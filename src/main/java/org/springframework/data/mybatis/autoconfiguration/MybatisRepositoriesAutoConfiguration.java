@@ -19,6 +19,7 @@
 package org.springframework.data.mybatis.autoconfiguration;
 
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,35 +28,67 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
 
 import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Jarvis Song
  */
 @Configuration
-@ConditionalOnProperty(prefix = "spring.data.mybatis.repositories", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(MybatisProperties.class)
+@ConditionalOnProperty(prefix = "spring.data.mybatis.repositories", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ConditionalOnBean({DataSource.class})
 @ConditionalOnMissingBean({MybatisRepositoryConfigExtension.class})
 @ConditionalOnClass({MybatisRepository.class, SqlSessionFactory.class})
 @AutoConfigureAfter({DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class})
 @Import(MybatisRepositoriesAutoConfigureRegistrar.class)
-public class MybatisRepositoriesAutoConfiguration {
+public class MybatisRepositoriesAutoConfiguration implements ResourceLoaderAware {
 
+    @Autowired
+    private MybatisProperties properties;
+    private ResourceLoader    resourceLoader;
 
     @Bean
     @ConditionalOnMissingBean
-    public SqlSessionFactoryBean sqlSessionFactory(DataSource dataSource) {
+    public SqlSessionFactoryBean sqlSessionFactory(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         factoryBean.setDataSource(dataSource);
+
+        if (null != properties.getBeforeMapperLocations() && properties.getBeforeMapperLocations().length > 0) {
+            Set<Resource> set = new HashSet<Resource>();
+            for (String s : properties.getBeforeMapperLocations()) {
+                Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(this.resourceLoader).getResources(s);
+                if (null != resources && resources.length > 0) {
+                    set.addAll(Arrays.asList(resources));
+                }
+            }
+            factoryBean.setMapperLocations(set.toArray(new Resource[set.size()]));
+        }
+
+        if (null != properties.getDefaultScriptingLanguage()) {
+            org.apache.ibatis.session.Configuration configuration = factoryBean.getObject().getConfiguration();
+            configuration.setDefaultScriptingLanguage(properties.getDefaultScriptingLanguage());
+        }
         return factoryBean;
+    }
+
+
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
     }
 
 
