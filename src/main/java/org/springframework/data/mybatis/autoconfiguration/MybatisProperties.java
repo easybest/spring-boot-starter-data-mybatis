@@ -29,9 +29,11 @@ public class MybatisProperties {
 
     private Class<?> defaultScriptingLanguage;
 
-    private String mapperLocations;
-    private String beforeMapperLocations;
+    private String[] mapperLocations;
+    private String[] beforeMapperLocations;
 
+    private String[] repositoriesBasePackagesFile;
+    private String[] repositoriesBasePackages;
 
     public Class<?> getDefaultScriptingLanguage() {
         return defaultScriptingLanguage;
@@ -41,19 +43,35 @@ public class MybatisProperties {
         this.defaultScriptingLanguage = defaultScriptingLanguage;
     }
 
-    public String getMapperLocations() {
+    public String[] getMapperLocations() {
         return mapperLocations;
     }
 
-    public void setMapperLocations(String mapperLocations) {
+    public void setMapperLocations(String[] mapperLocations) {
         this.mapperLocations = mapperLocations;
     }
 
-    public String getBeforeMapperLocations() {
+    public String[] getBeforeMapperLocations() {
         return beforeMapperLocations;
     }
 
-    public void setBeforeMapperLocations(String beforeMapperLocations) {
+    public void setBeforeMapperLocations(String[] beforeMapperLocations) {
         this.beforeMapperLocations = beforeMapperLocations;
+    }
+
+    public String[] getRepositoriesBasePackagesFile() {
+        return repositoriesBasePackagesFile;
+    }
+
+    public void setRepositoriesBasePackagesFile(String[] repositoriesBasePackagesFile) {
+        this.repositoriesBasePackagesFile = repositoriesBasePackagesFile;
+    }
+
+    public String[] getRepositoriesBasePackages() {
+        return repositoriesBasePackages;
+    }
+
+    public void setRepositoriesBasePackages(String[] repositoriesBasePackages) {
+        this.repositoriesBasePackages = repositoriesBasePackages;
     }
 }
