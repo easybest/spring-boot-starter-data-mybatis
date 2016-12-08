@@ -35,7 +35,7 @@
         </developerConnection>
     </scm>
     <properties>
-        <spring.data.mybatis.version>1.0.2.RELEASE</spring.data.mybatis.version>
+        <spring.data.mybatis.version>1.0.3.RELEASE</spring.data.mybatis.version>
     </properties>
     <dependencies>
         <dependency>
