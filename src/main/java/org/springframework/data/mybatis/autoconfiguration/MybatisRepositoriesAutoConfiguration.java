@@ -75,11 +75,15 @@ public class MybatisRepositoriesAutoConfiguration implements ResourceLoaderAware
                     set.addAll(Arrays.asList(resources));
                 }
             }
-            factoryBean.setMapperLocations(set.toArray(new Resource[set.size()]));
+            if (!set.isEmpty()) {
+                factoryBean.setMapperLocations(set.toArray(new Resource[set.size()]));
+            }
         }
 
+
+        org.apache.ibatis.session.Configuration configuration = factoryBean.getObject().getConfiguration();
+        configuration.setMapUnderscoreToCamelCase(true);
         if (null != properties.getDefaultScriptingLanguage()) {
-            org.apache.ibatis.session.Configuration configuration = factoryBean.getObject().getConfiguration();
             configuration.setDefaultScriptingLanguage(properties.getDefaultScriptingLanguage());
         }
         return factoryBean;
