@@ -1,6 +1,6 @@
 /*
  *
- *   Copyright 2016 the original author or authors.
+ *   Copyright 2017 the original author or authors.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ public class MybatisProperties {
 
     private String[] mapperLocations;
     private String[] beforeMapperLocations;
+
+    private String[] handlerPackages;
 
     private String[] repositoriesBasePackagesFile;
     private String[] repositoriesBasePackages;
@@ -73,5 +75,13 @@ public class MybatisProperties {
 
     public void setRepositoriesBasePackages(String[] repositoriesBasePackages) {
         this.repositoriesBasePackages = repositoriesBasePackages;
+    }
+
+    public String[] getHandlerPackages() {
+        return handlerPackages;
+    }
+
+    public void setHandlerPackages(String[] handlerPackages) {
+        this.handlerPackages = handlerPackages;
     }
 }
