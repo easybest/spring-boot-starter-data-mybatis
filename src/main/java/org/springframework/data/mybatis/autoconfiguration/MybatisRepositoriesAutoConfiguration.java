@@ -1,6 +1,6 @@
 /*
  *
- *   Copyright 2016 the original author or authors.
+ *   Copyright 2017 the original author or authors.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
+import org.springframework.util.StringUtils;
 
 import javax.sql.DataSource;
 import java.util.Arrays;
@@ -80,6 +81,18 @@ public class MybatisRepositoriesAutoConfiguration implements ResourceLoaderAware
             }
         }
 
+        String handlers = "ir.boot.autoconfigure.data.mybatis.handlers";
+        if (null != properties.getHandlerPackages() && properties.getHandlerPackages().length > 0) {
+            for (String s : properties.getHandlerPackages()) {
+                if (StringUtils.isEmpty(s)) {
+                    continue;
+                }
+                handlers += "," + s;
+            }
+
+        }
+
+        factoryBean.setTypeHandlersPackage(handlers);
 
         org.apache.ibatis.session.Configuration configuration = factoryBean.getObject().getConfiguration();
         configuration.setMapUnderscoreToCamelCase(true);
