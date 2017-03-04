@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starters</artifactId>
-        <version>1.5.1.RELEASE</version>
+        <version>1.5.2.RELEASE</version>
     </parent>
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-boot-starter-data-mybatis</artifactId>
-    <version>1.0.9.RELEASE</version>
+    <version>1.0.12.RELEASE</version>
     <name>Spring Boot Data MyBatis Starter</name>
     <description>Starter for using Spring Data MyBatis</description>
     <url>https://github.com/hatunet/spring-boot-starter-data-mybatis</url>
@@ -35,7 +35,7 @@
         </developerConnection>
     </scm>
     <properties>
-        <spring.data.mybatis.version>1.0.9.RELEASE</spring.data.mybatis.version>
+        <spring.data.mybatis.version>1.0.12.RELEASE</spring.data.mybatis.version>
     </properties>
     <dependencies>
         <dependency>
