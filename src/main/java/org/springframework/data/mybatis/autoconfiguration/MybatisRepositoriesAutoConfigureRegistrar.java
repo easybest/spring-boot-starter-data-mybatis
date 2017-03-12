@@ -84,7 +84,7 @@ class MybatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfig
         this.environment = environment;
         super.setEnvironment(environment);
         properties = new MybatisProperties();
-        properties.setMapperLocations(environment.getProperty(MybatisProperties.PREFIX + ".mapper-Locations", String[].class));
+        properties.setMapperLocations(environment.getProperty(MybatisProperties.PREFIX + ".mapper-locations", String[].class));
         properties.setRepositoriesBasePackages(environment.getProperty(MybatisProperties.PREFIX + ".repositories-base-packages", String[].class));
         properties.setRepositoriesBasePackagesFile(environment.getProperty(MybatisProperties.PREFIX + ".repositories-base-packages-file", String[].class));
     }
