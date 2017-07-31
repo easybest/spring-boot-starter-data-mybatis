@@ -18,6 +18,11 @@
 
 package org.springframework.data.mybatis.autoconfiguration;
 
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.nio.charset.Charset;
+import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -40,143 +45,154 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
 import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author Jarvis Song
  */
 @Configuration
-class MybatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfigurationSourceSupport implements ResourceLoaderAware, EnvironmentAware {
-    private transient static final Logger logger = LoggerFactory.getLogger(MybatisRepositoriesAutoConfigureRegistrar.class);
+class MybatisRepositoriesAutoConfigureRegistrar extends
+    AbstractRepositoryConfigurationSourceSupport implements ResourceLoaderAware, EnvironmentAware {
 
-    private MybatisProperties properties;
+  private transient static final Logger logger = LoggerFactory
+      .getLogger(MybatisRepositoriesAutoConfigureRegistrar.class);
 
-    private ResourceLoader resourceLoader;
-    private Environment    environment;
+  private MybatisProperties properties;
 
-    @Override
-    protected Class<? extends Annotation> getAnnotation() {
-        return EnableMybatisRepositories.class;
+  private ResourceLoader resourceLoader;
+  private Environment environment;
+
+  @Override
+  protected Class<? extends Annotation> getAnnotation() {
+    return EnableMybatisRepositories.class;
+  }
+
+  @Override
+  protected Class<?> getConfiguration() {
+    return EnableMybatisRepositoriesConfiguration.class;
+  }
+
+  @Override
+  protected RepositoryConfigurationExtension getRepositoryConfigurationExtension() {
+    return new MybatisRepositoryConfigExtension(resourceLoader);
+  }
+
+  @Override
+  public void setResourceLoader(ResourceLoader resourceLoader) {
+    this.resourceLoader = resourceLoader;
+    super.setResourceLoader(resourceLoader);
+  }
+
+  @Override
+  public void setEnvironment(Environment environment) {
+    this.environment = environment;
+    super.setEnvironment(environment);
+    properties = new MybatisProperties();
+    properties.setMapperLocations(
+        environment.getProperty(MybatisProperties.PREFIX + ".mapper-locations", String[].class));
+    properties.setRepositoriesBasePackages(environment
+        .getProperty(MybatisProperties.PREFIX + ".repositories-base-packages", String[].class));
+    properties.setRepositoriesBasePackagesFile(environment
+        .getProperty(MybatisProperties.PREFIX + ".repositories-base-packages-file",
+            String[].class));
+  }
+
+  @Override
+  public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
+      BeanDefinitionRegistry registry) {
+    if (null == properties.getMapperLocations() || properties.getMapperLocations().length == 0) {
+      super.registerBeanDefinitions(importingClassMetadata, registry);
+    } else {
+      new RepositoryConfigurationDelegate(getConfigurationSource(registry), this.resourceLoader,
+          this.environment).registerRepositoriesIn(registry,
+          getRepositoryConfigurationExtension());
+    }
+  }
+
+  private AnnotationRepositoryConfigurationSource getConfigurationSource(
+      BeanDefinitionRegistry registry) {
+    StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(
+        getConfiguration(), true);
+    return new MybatisAnnotationRepositoryConfigurationSource(metadata, getAnnotation(),
+        resourceLoader, this.environment, registry) {
+      @Override
+      public String[] getMapperLocations() {
+        return MybatisRepositoriesAutoConfigureRegistrar.this.getMapperLocations();
+      }
+
+      @Override
+      public Iterable<String> getBasePackages() {
+        return MybatisRepositoriesAutoConfigureRegistrar.this.getBasePackages();
+      }
+    };
+  }
+
+  protected String[] getMapperLocations() {
+    return properties.getMapperLocations();
+  }
+
+  @Override
+  protected Iterable<String> getBasePackages() {
+    if ((null == properties.getRepositoriesBasePackages()
+        || properties.getRepositoriesBasePackages().length == 0)
+        && (null == properties.getRepositoriesBasePackagesFile()
+        || properties.getRepositoriesBasePackagesFile().length == 0)) {
+      return super.getBasePackages();
     }
 
-    @Override
-    protected Class<?> getConfiguration() {
-        return EnableMybatisRepositoriesConfiguration.class;
-    }
-
-    @Override
-    protected RepositoryConfigurationExtension getRepositoryConfigurationExtension() {
-        return new MybatisRepositoryConfigExtension(resourceLoader);
-    }
-
-    @Override
-    public void setResourceLoader(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-        super.setResourceLoader(resourceLoader);
-    }
-
-    @Override
-    public void setEnvironment(Environment environment) {
-        this.environment = environment;
-        super.setEnvironment(environment);
-        properties = new MybatisProperties();
-        properties.setMapperLocations(environment.getProperty(MybatisProperties.PREFIX + ".mapper-locations", String[].class));
-        properties.setRepositoriesBasePackages(environment.getProperty(MybatisProperties.PREFIX + ".repositories-base-packages", String[].class));
-        properties.setRepositoriesBasePackagesFile(environment.getProperty(MybatisProperties.PREFIX + ".repositories-base-packages-file", String[].class));
-    }
-
-    @Override
-    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        if (null == properties.getMapperLocations() || properties.getMapperLocations().length == 0) {
-            super.registerBeanDefinitions(importingClassMetadata, registry);
-        } else {
-            new RepositoryConfigurationDelegate(getConfigurationSource(), this.resourceLoader,
-                    this.environment).registerRepositoriesIn(registry,
-                    getRepositoryConfigurationExtension());
+    Set<String> basePackages = new HashSet<String>();
+    if (null != properties.getRepositoriesBasePackages()
+        && properties.getRepositoriesBasePackages().length > 0) {
+      for (String s : properties.getRepositoriesBasePackages()) {
+        if (StringUtils.isEmpty(s)) {
+          continue;
         }
+        basePackages.add(s);
+      }
     }
 
-    private AnnotationRepositoryConfigurationSource getConfigurationSource() {
-        StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(
-                getConfiguration(), true);
-        return new MybatisAnnotationRepositoryConfigurationSource(metadata, getAnnotation(), resourceLoader, this.environment) {
-            @Override
-            public String[] getMapperLocations() {
-                return MybatisRepositoriesAutoConfigureRegistrar.this.getMapperLocations();
+    if (null != properties.getRepositoriesBasePackagesFile()
+        && properties.getRepositoriesBasePackagesFile().length > 0) {
+      for (String s : properties.getRepositoriesBasePackagesFile()) {
+        if (StringUtils.isEmpty(s)) {
+          continue;
+        }
+        try {
+          Resource[] resources = ResourcePatternUtils
+              .getResourcePatternResolver(this.resourceLoader).getResources(s);
+          if (null == resources || resources.length == 0) {
+            continue;
+          }
+          for (Resource resource : resources) {
+            String ss = StreamUtils
+                .copyToString(resource.getInputStream(), Charset.forName("UTF-8"));
+            if (StringUtils.isEmpty(ss)) {
+              continue;
             }
-
-            @Override
-            public Iterable<String> getBasePackages() {
-                return MybatisRepositoriesAutoConfigureRegistrar.this.getBasePackages();
+            String[] sss = ss.split("\n");
+            if (null == sss || sss.length == 0) {
+              continue;
             }
-        };
-    }
+            for (String pack : sss) {
+              if (StringUtils.isEmpty(pack)) {
+                continue;
+              }
+              basePackages.add(StringUtils.trimAllWhitespace(pack));
+            }
+          }
 
-    protected String[] getMapperLocations() {
-        return properties.getMapperLocations();
-    }
-
-    @Override
-    protected Iterable<String> getBasePackages() {
-        if ((null == properties.getRepositoriesBasePackages() || properties.getRepositoriesBasePackages().length == 0)
-                && (null == properties.getRepositoriesBasePackagesFile() || properties.getRepositoriesBasePackagesFile().length == 0)) {
-            return super.getBasePackages();
+        } catch (IOException e) {
+          // ignore
+          logger.warn(e.getMessage(), e);
         }
 
-        Set<String> basePackages = new HashSet<String>();
-        if (null != properties.getRepositoriesBasePackages() && properties.getRepositoriesBasePackages().length > 0) {
-            for (String s : properties.getRepositoriesBasePackages()) {
-                if (StringUtils.isEmpty(s)) {
-                    continue;
-                }
-                basePackages.add(s);
-            }
-        }
+      }
 
-        if (null != properties.getRepositoriesBasePackagesFile() && properties.getRepositoriesBasePackagesFile().length > 0) {
-            for (String s : properties.getRepositoriesBasePackagesFile()) {
-                if (StringUtils.isEmpty(s)) {
-                    continue;
-                }
-                try {
-                    Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(this.resourceLoader).getResources(s);
-                    if (null == resources || resources.length == 0) {
-                        continue;
-                    }
-                    for (Resource resource : resources) {
-                        String ss = StreamUtils.copyToString(resource.getInputStream(), Charset.forName("UTF-8"));
-                        if (StringUtils.isEmpty(ss)) {
-                            continue;
-                        }
-                        String[] sss = ss.split("\n");
-                        if (null == sss || sss.length == 0) {
-                            continue;
-                        }
-                        for (String pack : sss) {
-                            if (StringUtils.isEmpty(pack)) {
-                                continue;
-                            }
-                            basePackages.add(StringUtils.trimAllWhitespace(pack));
-                        }
-                    }
-
-                } catch (IOException e) {
-                    // ignore
-                    logger.warn(e.getMessage(), e);
-                }
-
-            }
-
-        }
-
-        return basePackages;
     }
 
-    @EnableMybatisRepositories
-    private static class EnableMybatisRepositoriesConfiguration {
-    }
+    return basePackages;
+  }
+
+  @EnableMybatisRepositories
+  private static class EnableMybatisRepositoriesConfiguration {
+
+  }
 }
